@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>卡片信息视频</title>
+<style>
+  :root {
+    --primary: #7a22e8; --primary2: #9b2cff; --primary3: #5d14d0;
+    --ink: #4c1d95; --text: #2b2340; --muted: #6b6380; --hl1: #c026d3; --hl2: #7a22e8;
+    --bg1: #f6f2fc; --bg2: #e6dcf6; --glow1: rgba(214,180,255,.55); --glow2: rgba(255,214,238,.55);
+    --card: rgba(255,255,255,.84); --cardText: #2f2840; --line: rgba(90,60,140,.12); --tdlast: rgba(240,230,255,.95);
+    --numbg: rgba(255,255,255,.75); --brandText: #333; --foot: #6f6684; --shadow: rgba(110,60,190,.12);
+    --W: 1080px; --H: 1920px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: var(--W); height: var(--H); overflow: hidden; background: var(--bg2); }
+  body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif; color: var(--text); }
+  #stage { position: relative; width: var(--W); height: var(--H); overflow: hidden;
+    background:
+      radial-gradient(900px 700px at 105% 8%, var(--glow1), transparent 60%),
+      radial-gradient(800px 800px at -10% 55%, var(--glow2), transparent 60%),
+      radial-gradient(900px 600px at 90% 95%, var(--glow1), transparent 60%),
+      linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%); }
+  img.emo { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; object-fit: contain; }
+
+  /* 品牌条 */
+  .brandbar { position: absolute; top: 70px; left: 70px; right: 70px; height: 90px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 22px; font-size: 28px; font-weight: 700; color: var(--brandText); }
+  .brand img { height: 56px; }
+  .brand .sep { width: 2px; height: 34px; background: #999; }
+  .badge { text-align: right; font-weight: 900; font-style: italic; font-size: 40px; color: #f08a24; line-height: 1; }
+  .badge b { color: var(--primary); font-style: normal; }
+  .badge span { display: inline-block; margin-top: 8px; font-size: 20px; font-style: normal; color: #fff; background: var(--primary); border-radius: 10px; padding: 3px 14px; }
+
+  .scene { position: absolute; inset: 0; display: none; }
+  [data-t] { will-change: transform, opacity, filter; }
+  .wrap { position: absolute; left: 70px; right: 70px; top: 300px; }
+  .num { display: inline-block; font-size: 34px; font-weight: 800; color: var(--ink); background: var(--numbg); border-radius: 14px; padding: 6px 18px; margin-bottom: 26px; }
+  .h2 { font-size: 50px; line-height: 1.32; font-weight: 800; color: var(--ink); letter-spacing: 1px; }
+  .lead { font-size: 28px; line-height: 1.55; color: var(--text); opacity: .85; margin-top: 18px; }
+  .card { background: var(--card); border-radius: 28px; padding: 36px 40px; box-shadow: 0 18px 50px var(--shadow); color: var(--cardText); }
+  .card h3 { font-size: 38px; line-height: 1.4; color: var(--ink); font-weight: 800; }
+  .list { list-style: none; margin-top: 14px; }
+  .list li { font-size: 30px; line-height: 1.45; padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--cardText); }
+  .list li:last-child { border-bottom: 0; }
+  .check li::before { content: "✓"; color: var(--primary); font-weight: 900; margin-right: 14px; }
+  .pbox { border-radius: 26px; padding: 34px 40px; color: #fff; background: linear-gradient(120deg, var(--primary2) 0%, var(--primary) 50%, var(--primary3) 100%); box-shadow: 0 22px 50px var(--shadow); }
+  .pbox .t { font-size: 36px; font-weight: 800; line-height: 1.6; }
+  .pbox .s { font-size: 27px; opacity: .92; line-height: 1.6; }
+  em, .hl { font-style: normal; background: linear-gradient(90deg, var(--hl1), var(--hl2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* hero */
+  .hero-t { font-size: 124px; font-weight: 900; color: var(--primary); letter-spacing: 2px; line-height: 1.12; text-shadow: 0 6px 0 var(--shadow); }
+  .hero-s { font-size: 64px; font-weight: 900; color: var(--ink); margin-top: 20px; line-height: 1.3; }
+  .hero-s em { font-size: 92px; }
+  .props { position: absolute; left: 0; width: 1080px; top: 760px; height: 400px; }
+  .prop { position: absolute; font-size: 220px; line-height: 1; filter: drop-shadow(0 30px 30px rgba(40,20,80,.25)); }
+  .prop > img { width: 100%; display: block; }
+  .spark { position: absolute; color: var(--primary2); opacity: .55; font-size: 44px; }
+  .cta { position: absolute; left: 70px; right: 70px; top: 1170px; }
+
+  /* grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 34px; }
+  .grid .card { padding: 34px 32px; }
+  .grid .card h4 { font-size: 34px; color: var(--primary); margin-bottom: 14px; }
+  .grid .card p { font-size: 27px; line-height: 1.55; opacity: .9; }
+
+  /* table */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 30px; border-radius: 22px; overflow: hidden; box-shadow: 0 18px 50px var(--shadow); font-size: 27px; }
+  th { background: linear-gradient(90deg, var(--primary2), var(--primary3)); color: #fff; text-align: left; padding: 22px 24px; font-size: 28px; }
+  td { padding: 24px; line-height: 1.5; background: var(--card); border-top: 1px solid var(--line); color: var(--cardText); }
+  td:first-child { color: var(--primary); font-weight: 800; width: 22%; }
+  td:last-child { background: var(--tdlast); }
+
+  /* steps */
+  .step { margin-top: 22px; }
+  .step .pbox { display: flex; align-items: center; gap: 22px; padding: 30px 36px; }
+  .step .n { font-size: 34px; font-weight: 800; opacity: .9; }
+  .step .name { font-size: 38px; font-weight: 800; }
+  .step .en { font-size: 18px; letter-spacing: 2px; opacity: .75; margin-left: 10px; }
+  .step .d { font-size: 26px; opacity: .92; line-height: 1.55; margin-top: 8px; }
+  .step .ic { font-size: 56px; margin-left: auto; }
+  .ring { position: absolute; right: 20px; top: -40px; width: 300px; height: 300px; }
+  .ring .cube { position: absolute; width: 74px; height: 74px; border-radius: 18px; display: grid; place-items: center; font-size: 40px; box-shadow: 0 10px 20px rgba(40,20,80,.25); }
+  .ring .core { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 22px; font-weight: 800; color: var(--primary); white-space: nowrap; }
+  .pages { position: relative; margin-top: 16px; }
+  .pages > div { position: absolute; left: 0; right: 0; top: 0; }
+
+  /* cards */
+  .dim { margin-top: 24px; border-left: 8px solid var(--primary); }
+  .dim h4 { font-size: 36px; color: var(--primary); margin-bottom: 14px; }
+  .dim .q { font-size: 31px; font-weight: 800; line-height: 1.45; }
+  .dim .k { font-size: 26px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+  .deco { position: absolute; right: -40px; top: -60px; font-size: 260px; opacity: .13; }
+
+  /* stats */
+  .stats { display: grid; gap: 26px; margin-top: 40px; }
+  .stat { display: flex; align-items: baseline; gap: 28px; }
+  .stat .v { font-size: 120px; font-weight: 900; line-height: 1; min-width: 380px; }
+  .stat .l { font-size: 32px; font-weight: 800; color: var(--ink); line-height: 1.4; }
+  .stat .k { font-size: 25px; color: var(--muted); margin-top: 6px; }
+
+  /* timeline */
+  .tl { position: relative; margin-top: 40px; padding-left: 70px; }
+  .tl::before { content: ""; position: absolute; left: 22px; top: 10px; bottom: 10px; width: 6px; border-radius: 3px; background: linear-gradient(var(--primary2), var(--primary3)); opacity: .35; }
+  .tl .ev { position: relative; margin-bottom: 26px; }
+  .tl .ev::before { content: ""; position: absolute; left: -62px; top: 34px; width: 30px; height: 30px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 8px var(--numbg); }
+  .tl .time { font-size: 30px; font-weight: 900; color: var(--primary); }
+  .tl .card { padding: 26px 32px; }
+  .tl h4 { font-size: 32px; color: var(--ink); margin-top: 4px; }
+  .tl p { font-size: 26px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  /* quote */
+  .quote { position: relative; margin-top: 60px; padding: 70px 60px 60px; }
+  .quote .mark { position: absolute; left: 30px; top: -50px; font-size: 220px; line-height: 1; font-weight: 900; color: var(--primary); opacity: .25; font-family: Georgia, serif; }
+  .quote .qt { font-size: 52px; line-height: 1.5; font-weight: 800; color: var(--ink); }
+  .quote .who { margin-top: 40px; font-size: 30px; color: var(--muted); text-align: right; }
+  .quote .who b { color: var(--primary); font-size: 34px; }
+
+  /* compare */
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; }
+  .cmp .col { border-radius: 26px; padding: 32px 30px; }
+  .cmp .col h4 { font-size: 34px; margin-bottom: 18px; }
+  .cmp .col li { list-style: none; font-size: 27px; line-height: 1.45; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .cmp .col li:last-child { border-bottom: 0; }
+  .cmp .l { background: var(--card); color: var(--cardText); box-shadow: 0 18px 50px var(--shadow); }
+  .cmp .l h4 { color: var(--muted); }
+  .cmp .l li::before { content: "✕ "; color: #e5484d; font-weight: 900; }
+  .cmp .r li { border-color: rgba(255,255,255,.2); }
+  .cmp .r li::before { content: "✓ "; font-weight: 900; }
+
+  /* image / outro */
+  .imgbox { position: relative; margin-top: 36px; border-radius: 28px; overflow: hidden; box-shadow: 0 18px 50px var(--shadow); background: #fff; }
+  .imgbox .zin { position: relative; transform-origin: 50% 50%; }
+  .imgbox img { display: block; width: 100%; max-height: 760px; object-fit: contain; }
+  .imgbox .hlbox { position: absolute; border: 6px solid var(--hl1); border-radius: 12px; box-shadow: 0 0 0 2000px rgba(0,0,0,.25); opacity: 0; }
+  .cap { font-size: 28px; color: var(--text); margin-top: 24px; line-height: 1.55; }
+  .qrcard { width: 520px; margin: 60px auto 0; background: #fff; border-radius: 32px; padding: 40px; text-align: center; box-shadow: 0 24px 60px var(--shadow); }
+  .qrcard img { width: 100%; display: block; border-radius: 12px; }
+  .qrcard .ql { font-size: 30px; font-weight: 800; color: #333; margin-top: 24px; }
+  .contact { text-align: center; font-size: 28px; color: var(--muted); margin-top: 30px; line-height: 1.6; }
+
+  /* 版面安全区（竖屏）：正文 y ≤ 1380；字幕 1400 起；脚注 1530；再往下会被抖音/视频号底部文案遮挡 */
+  #sub { position: absolute; left: 130px; right: 150px; top: 1400px; text-align: center; font-size: 44px; font-weight: 800; line-height: 1.35;
+    color: #fff; text-shadow: 0 0 6px rgba(20,10,40,.9), 0 3px 10px rgba(20,10,40,.8); display: none; }
+  .foot { position: absolute; left: 70px; right: 70px; top: 1530px; font-size: 17px; line-height: 1.6; color: var(--foot); }
+
+  /* ---------- 横屏 16:9（1920×1080）：左栏标题，右栏内容 ---------- */
+  .landscape .brandbar { top: 40px; left: 110px; right: 110px; }
+  .landscape .wrap { top: 190px; left: 120px; right: 120px; display: grid; grid-template-columns: 640px 1fr; column-gap: 80px; align-items: start; }
+  .landscape .wrap > :first-child { grid-column: 1; grid-row: 1 / span 20; }
+  .landscape .wrap > :not(:first-child) { grid-column: 2; }
+  .landscape .wrap > .card:nth-child(2), .landscape .wrap > table:nth-child(2), .landscape .wrap > .grid:nth-child(2),
+  .landscape .wrap > .stats:nth-child(2), .landscape .wrap > .cmp:nth-child(2), .landscape .wrap > .tl:nth-child(2),
+  .landscape .wrap > .imgbox:nth-child(2), .landscape .wrap > .pages:nth-child(2) { margin-top: 0 !important; }
+  .landscape .h2 { font-size: 56px; }
+  .landscape .wrap.herow { display: block; top: 240px !important; width: 1000px; right: auto; }
+  .landscape .props { left: 900px; top: 260px; transform: scale(.9); transform-origin: 0 0; }
+  .landscape .cta { top: 760px; left: 120px; right: auto; width: 900px; }
+  .landscape .wrap.outrow { display: block; left: 0; right: 0; top: 170px !important; }
+  .landscape .qrcard { width: 380px; margin-top: 30px; padding: 30px; }
+  .landscape .ring { position: relative; right: auto; top: auto; margin-top: 40px; }
+  .landscape .imgbox img { max-height: 640px; }
+  .landscape .quote { margin-top: 0; }
+  .landscape .card { padding: 28px 36px; }
+  .landscape .stats { gap: 20px; }
+  .landscape .stat .v { font-size: 96px; min-width: 330px; }
+  .landscape .dim { margin-top: 18px; }
+  .landscape .dim .k { margin-top: 6px; }
+  .landscape #sub { top: 948px; left: 300px; right: 300px; font-size: 42px; }
+  .landscape .foot { top: 1040px; left: 120px; right: 120px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="brandbar" id="brandbar"></div>
+  <div id="scenes"></div>
+  <div id="sub"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script src="content.js"></script>
+<script src="voice/manifest.js" onerror="this.remove()"></script>
+<script src="icons/index.js" onerror="this.remove()"></script>
+<script>
+const C = window.CONTENT;
+const MUSIC_ONLY = !!window.__MUSIC_ONLY;  // render.mjs --music-only：忽略配音，按内容自动定页长
+const VOICE = (!MUSIC_ONLY && C.audio && C.audio.voice && window.VOICE) ? window.VOICE : null;  // tts.py / align.py 生成
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s == null ? '' : s);
+
+/* ---------- 画幅 ---------- */
+const LAND = C.format === '16:9';
+const W = LAND ? 1920 : 1080, H = LAND ? 1080 : 1920;
+window.STAGE = { w: W, h: H };
+document.documentElement.style.setProperty('--W', W + 'px');
+document.documentElement.style.setProperty('--H', H + 'px');
+if (LAND) document.body.classList.add('landscape');
+const SAFE = LAND ? 910 : 1380;  // 正文底线
+
+/* ---------- 主题：预设名或自定义颜色 ---------- */
+const PRESETS = {
+  purple: {},
+  blue: { primary: '#1f6feb', primary2: '#3b8cff', primary3: '#0b4fc4', ink: '#0a3d91', hl1: '#06a6d4', hl2: '#1f6feb', muted: '#5b6b85', text: '#1d2a40',
+    bg1: '#f3f8ff', bg2: '#dde9fb', glow1: 'rgba(150,190,255,.5)', glow2: 'rgba(170,235,255,.45)', tdlast: 'rgba(226,238,255,.95)', shadow: 'rgba(30,80,180,.14)', cardText: '#1d2a40', foot: '#5b6b85' },
+  green: { primary: '#0f9d58', primary2: '#22c55e', primary3: '#047857', ink: '#065f46', hl1: '#10b981', hl2: '#0f766e', muted: '#4b6358', text: '#16302a',
+    bg1: '#f2fbf6', bg2: '#d9f2e4', glow1: 'rgba(150,230,190,.5)', glow2: 'rgba(200,245,220,.5)', tdlast: 'rgba(222,247,234,.95)', shadow: 'rgba(15,120,80,.14)', cardText: '#16302a', foot: '#4b6358' },
+  orange: { primary: '#ea580c', primary2: '#fb923c', primary3: '#c2410c', ink: '#9a3412', hl1: '#f43f5e', hl2: '#ea580c', muted: '#7c5d4a', text: '#3b2414',
+    bg1: '#fff8f1', bg2: '#fde5cf', glow1: 'rgba(255,200,150,.55)', glow2: 'rgba(255,220,200,.55)', tdlast: 'rgba(255,237,220,.95)', shadow: 'rgba(200,90,20,.14)', cardText: '#3b2414', foot: '#7c5d4a' },
+  dark: { primary: '#8b5cf6', primary2: '#a78bfa', primary3: '#6d28d9', ink: '#f5f3ff', hl1: '#22d3ee', hl2: '#a78bfa', muted: '#a5a3c0', text: '#e9e7f5',
+    bg1: '#14112a', bg2: '#0b0a18', glow1: 'rgba(139,92,246,.35)', glow2: 'rgba(34,211,238,.18)', card: 'rgba(255,255,255,.07)', cardText: '#e9e7f5',
+    line: 'rgba(255,255,255,.12)', tdlast: 'rgba(139,92,246,.18)', numbg: 'rgba(255,255,255,.12)', brandText: '#f5f3ff', foot: '#8e8aa8', shadow: 'rgba(0,0,0,.35)' },
+};
+const theme = typeof C.theme === 'string' ? { preset: C.theme } : (C.theme || {});
+Object.entries({ ...(PRESETS[theme.preset] || {}), ...theme }).forEach(([k, v]) => k !== 'preset' && document.documentElement.style.setProperty('--' + k, v));
+
+/* ---------- emoji → Fluent 3D 图片（icons/index.js 由 render.mjs 按需复制到项目） ---------- */
+const ICON_MAP = window.ICONS || {};
+const ICON_RE = Object.keys(ICON_MAP).length
+  ? new RegExp(Object.keys(ICON_MAP).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gu') : null;
+const emo = html => ICON_RE ? html.replace(/️/g, '').replace(ICON_RE, m => `<img class="emo" src="icons/${ICON_MAP[m]}">`) : html;
+
+/* ---------- 品牌条 / 脚注 ---------- */
+if (C.brand) {
+  const b = C.brand;
+  const left = (b.logo ? `<img src="${b.logo}">` : '') + (b.name ? `<span>${b.name}</span>` : '') +
+    (b.sub ? `<div class="sep"></div><span>${b.sub}</span>` : '');
+  const right = b.badge ? `<div class="badge">${b.badge.a ? `<i>${b.badge.a}</i>` : ''}<b>${esc(b.badge.b)}</b>${b.badge.tag ? `<br><span>${b.badge.tag}</span>` : ''}</div>` : '';
+  $('#brandbar').innerHTML = emo(`<div class="brand">${left}</div>${right}`);
+}
+$('#foot').textContent = C.footnote || '';
+
+/* ---------- 构建工具 ---------- */
+// 动画属性：type = right|up|pop|fade；d = 入场时间(秒，相对场景)；o = 退场时间(可选)
+const A = (type, d, o) => `data-t="${type}" data-d="${(+d).toFixed(2)}"${o != null ? ` data-o="${(+o).toFixed(2)}"` : ''}`;
+const head = s => `<div ${A('right', 0.05)}>${s.num ? `<div class="num">${s.num}</div>` : ''}<div class="h2">${s.title}</div>${s.lead ? `<div class="lead">${s.lead}</div>` : ''}</div>`;
+const chunk = (arr, n) => arr.reduce((a, x, i) => (i % n ? a[a.length - 1].push(x) : a.push([x]), a), []);
+
+// 揭示单元计时：每个单元调用一次 D(默认延时)。有口播 cue 时用 cue（念到时略提前 0.15s 出现），否则用默认延时。
+let CX = { cues: null, k: 0, groups: 1 };
+function D(def) {
+  const k = CX.k++;
+  if (!CX.cues) return def;
+  if (k < CX.cues.length) return CX.cues[k];
+  return (CX.cues[CX.cues.length - 1] || 0.6) + 0.25 * (k - CX.cues.length + 1);  // | 不够时顺延
+}
+// 分页：items 按 pageSize 分组，前一组掉落后下一组升起。无 cue 时平均分配时长，有 cue 时在下一组第一个 cue 前换组。
+function paged(items, pageSize, dur, first, render) {
+  const groups = chunk(items, pageSize || 3);
+  CX.groups = groups.length;
+  const span = (dur - first) / groups.length;
+  const times = groups.map((g, gi) => g.map((_, j) => D((gi === 0 ? first : first + gi * span + 0.45) + j * 0.2)));
+  let k = 0;
+  return `<div class="pages">${groups.map((g, gi) => {
+    const last = gi === groups.length - 1;
+    const tout = last ? null : CX.cues ? times[gi + 1][0] - 0.55 : first + (gi + 1) * span;
+    return `<div>${g.map((it, j) => render(it, k++, times[gi][j], tout)).join('')}</div>`;
+  }).join('')}</div>`;
+}
+const img = (src, style = '') => `<img src="${src}" style="${style}">`;
+const ICONS = ['🎯', '🧩', '📊', '🚀', '👁️', '🔁', '💡', '⚙️'];
+const CUBES = ['#ff6b6b,#ff9f43', '#4f7cff,#5ad1ff', '#2ec4b6,#7be495', '#9b2cff,#ff7ac6', '#ffb020,#ff6b6b', '#7a22e8,#4f7cff'];
+const boxT = b => [].concat(b).map(t => `<div class="t">${t}</div>`).join('');
+
+// 每种页面的揭示单元（顺序 = 旁白里 | 的顺序）写在 reference/content-schema.md
+const R = {
+  hero: (s) => {
+    const tp = (s.props || []).length ? D(0.8) : 0, tc = s.cta ? D(1.6) : 0;
+    return `
+    <div class="wrap herow" style="top:360px">
+      <div ${A('right', 0.05)} class="hero-t">${s.title}</div>
+      ${s.sub ? `<div ${A('right', 0.2)} class="hero-s">${s.sub}</div>` : ''}
+    </div>
+    <div class="props">
+      ${(s.props || []).map((p, i) => `<div ${A('pop', tp + i * 0.12)} data-float="${i}" class="prop" style="left:${p.x}px;top:${p.y}px;font-size:${p.size || 220}px;${p.img ? `width:${p.size || 260}px` : ''}">${p.img ? img(p.img) : p.e}</div>`).join('')}
+      ${(s.props || []).length ? `<div ${A('fade', tp + 0.4)} class="spark" style="left:120px;top:20px">✦</div><div ${A('fade', tp + 0.5)} class="spark" style="left:930px;top:0">✦</div><div ${A('fade', tp + 0.6)} class="spark" style="left:870px;top:320px;font-size:30px">✦</div>` : ''}
+    </div>
+    ${s.cta ? `<div class="cta"><div ${A('up', tc)} class="pbox"><div class="t">${s.cta}</div>${s.ctaSub ? `<div class="s">${s.ctaSub}</div>` : ''}</div></div>` : ''}`;
+  },
+
+  list: (s) => {
+    const ti = s.items.map((_, i) => D(0.8 + i * 0.12)), tb = s.box ? D(0.9 + s.items.length * 0.12 + 0.3) : 0;
+    return `
+    <div class="wrap">${head(s)}
+      <div ${A('up', CX.cues ? ti[0] - 0.2 : 0.6)} class="card" style="margin-top:30px">
+        ${s.question ? `<h3>${s.question}</h3>` : ''}
+        <ol class="list">${s.items.map((t, i) => `<li ${A('up', ti[i])}>${s.numbered === false ? '' : (i + 1) + '. '}${t}</li>`).join('')}</ol>
+      </div>
+      ${s.box ? `<div ${A('up', tb)} class="pbox" style="margin-top:32px">${boxT(s.box)}</div>` : ''}
+    </div>`;
+  },
+
+  grid: (s) => {
+    const ti = s.cells.map((_, i) => D(0.5 + i * 0.15)), tb = s.box ? D(0.6 + s.cells.length * 0.15 + 0.3) : 0;
+    return `
+    <div class="wrap">${head(s)}
+      <div class="grid">${s.cells.map((c, i) => `<div ${A('up', ti[i])} class="card"><h4>${c.h}</h4><p>${c.p}</p></div>`).join('')}</div>
+      ${s.box ? `<div ${A('up', tb)} class="pbox" style="margin-top:32px">${boxT(s.box)}</div>` : ''}
+    </div>`;
+  },
+
+  table: (s) => {
+    const ti = s.rows.map((_, i) => D(0.7 + i * 0.15)), tb = s.box ? D(0.8 + s.rows.length * 0.15 + 0.3) : 0;
+    return `
+    <div class="wrap">${head(s)}
+      <table ${A('up', CX.cues ? ti[0] - 0.2 : 0.5)}>
+        <tr>${s.head.map(h => `<th>${h}</th>`).join('')}</tr>
+        ${s.rows.map((r, i) => `<tr ${A('up', ti[i])}>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+      </table>
+      ${s.box ? `<div ${A('up', tb)} class="pbox" style="margin-top:34px"><div class="t">${s.box.t} <span style="float:right">→</span></div>${(s.box.s || []).map(t => `<div class="s">${t}</div>`).join('')}</div>` : ''}
+    </div>`;
+  },
+
+  steps: (s, T) => `
+    <div class="wrap">
+      <div ${A('right', 0.05)} style="position:relative">
+        ${s.num ? `<div class="num">${s.num}</div>` : ''}<div class="h2" style="max-width:${s.ring === false || LAND ? 940 : 640}px">${s.title}</div>
+        ${s.lead ? `<div class="lead" style="font-size:30px;font-weight:600;max-width:${s.ring === false || LAND ? 940 : 660}px">${s.lead}</div>` : ''}
+        ${s.ring === false ? '' : `<div class="ring" data-ring>${s.steps.slice(0, 6).map((st, i) => `<div class="cube" style="background:linear-gradient(135deg,${CUBES[i % 6]})">${st.icon || ICONS[i]}</div>`).join('')}${s.core ? `<div class="core">${s.core}</div>` : ''}</div>`}
+      </div>
+      ${paged(s.steps, s.pageSize || 3, T.dur, 0.6, (st, i, d, o) => `
+        <div ${A('up', d, o)} class="step"><div class="pbox">
+          <div><div><span class="n">${String(i + 1).padStart(2, '0')}</span>&nbsp; <span class="name">${st.name}</span>${st.en ? `<span class="en">${st.en}</span>` : ''}</div>
+          ${st.d ? `<div class="d">${st.d}</div>` : ''}</div><div class="ic">${st.icon || ICONS[i % ICONS.length]}</div>
+        </div></div>`)}
+    </div>`,
+
+  cards: (s, T) => `
+    <div class="wrap">${head(s)}
+      ${s.deco ? `<div class="deco"><div ${A('fade', 0.4)}>${s.deco}</div></div>` : ''}
+      ${paged(s.cards, s.pageSize || 3, T.dur, 0.6, (c, i, d, o) => `
+        <div ${A('up', d, o)} class="card dim"><h4>${c.h}</h4>${c.q ? `<div class="q">${c.q}</div>` : ''}${c.k ? `<div class="k">${c.k}</div>` : ''}</div>`)}
+    </div>`,
+
+  checklist: (s) => {
+    const ti = s.items.map((_, i) => D(0.7 + i * 0.12)), tb = s.box ? D(0.8 + s.items.length * 0.12 + 0.2) : 0;
+    return `
+    <div class="wrap">${head(s)}
+      <div ${A('up', CX.cues ? ti[0] - 0.2 : 0.6)} class="card" style="margin-top:36px"><ul class="list check">${s.items.map((t, i) => `<li ${A('up', ti[i])}>${t}</li>`).join('')}</ul></div>
+      ${s.box ? `<div ${A('up', tb)} class="pbox" style="margin-top:28px">
+        <div class="t">${s.box.t}</div>
+        ${(s.box.items || []).map(it => `<div style="margin-top:14px"><div class="t" style="font-size:31px">✓ ${it.h}</div>${it.p ? `<div class="s">${it.p}</div>` : ''}</div>`).join('')}
+      </div>` : ''}
+    </div>`;
+  },
+
+  stats: (s) => {
+    const ti = s.stats.map((_, i) => D(0.6 + i * 0.25)), tb = s.box ? D(0.9 + s.stats.length * 0.25) : 0;
+    return `
+    <div class="wrap">${head(s)}
+      <div class="stats">${s.stats.map((x, i) => `
+        <div ${A('up', ti[i])} class="card stat">
+          <div class="v hl"><span data-count="${x.value}" data-dec="${x.decimals || 0}" data-cd="${ti[i]}">${x.value}</span>${x.suffix || ''}</div>
+          <div><div class="l">${x.label}</div>${x.note ? `<div class="k">${x.note}</div>` : ''}</div>
+        </div>`).join('')}</div>
+      ${s.box ? `<div ${A('up', tb)} class="pbox" style="margin-top:32px">${boxT(s.box)}</div>` : ''}
+    </div>`;
+  },
+
+  timeline: (s) => {
+    const ti = s.events.map((_, i) => D(0.6 + i * 0.3)), tb = s.box ? D(0.8 + s.events.length * 0.3) : 0;
+    return `
+    <div class="wrap">${head(s)}
+      <div class="tl">${s.events.map((e, i) => `
+        <div ${A('up', ti[i])} class="ev"><div class="card"><div class="time">${e.time}</div>${e.h ? `<h4>${e.h}</h4>` : ''}${e.p ? `<p>${e.p}</p>` : ''}</div></div>`).join('')}</div>
+      ${s.box ? `<div ${A('up', tb)} class="pbox" style="margin-top:10px">${boxT(s.box)}</div>` : ''}
+    </div>`;
+  },
+
+  quote: (s) => {
+    const tq = D(0.5), ta = (s.author || s.role) ? D(1.4) : 0;
+    return `
+    <div class="wrap">${s.title || s.num ? head(s) : `<div ${A('fade', 0)}></div>`}
+      <div class="card quote" ${A('up', tq)}>
+        <div class="mark">“</div>
+        <div class="qt">${s.quote}</div>
+        ${(s.author || s.role) ? `<div class="who" ${A('fade', ta)}>—— <b>${s.author || ''}</b> ${s.role || ''}</div>` : ''}
+      </div>
+    </div>`;
+  },
+
+  compare: (s) => {
+    const tl = D(0.6), tr = D(1.1), tb = s.box ? D(1.6) : 0;
+    const col = (c, cls, d) => `<div ${A('up', d)} class="col ${cls}"><h4>${c.h}</h4><ul>${c.items.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
+    return `
+    <div class="wrap">${head(s)}
+      <div class="cmp">${col(s.left, 'l', tl)}${col(s.right, 'r pbox', tr)}</div>
+      ${s.box ? `<div ${A('up', tb)} class="pbox" style="margin-top:28px">${boxT(s.box)}</div>` : ''}
+    </div>`;
+  },
+
+  image: (s) => {
+    const ti = D(0.5), tz = s.zoom ? D(1.8) : 0, tc = s.caption ? D(s.zoom ? 2.2 : 0.8) : 0;
+    const z = s.zoom;  // [x, y, w, h]，0~1 的比例，相对图片
+    return `
+    <div class="wrap">${head(s)}
+      <div ${A('up', ti)} class="imgbox"><div class="zin" ${z ? `data-zoom="${z.join(',')}" data-zt="${tz}"` : ''}>${img(s.img)}
+        ${z ? `<div class="hlbox" style="left:${z[0] * 100}%;top:${z[1] * 100}%;width:${z[2] * 100}%;height:${z[3] * 100}%"></div>` : ''}</div></div>
+      ${s.caption ? `<div ${A('up', tc)} class="cap">${s.caption}</div>` : ''}
+    </div>`;
+  },
+
+  outro: (s) => {
+    const tq = s.qr ? D(0.6) : 0, tc = s.contact ? D(0.9) : 0;
+    return `
+    <div class="wrap outrow" style="top:340px;text-align:center">
+      <div ${A('right', 0.05)} class="h2" style="font-size:64px">${s.title}</div>
+      ${s.sub ? `<div ${A('right', 0.2)} class="lead" style="font-size:34px">${s.sub}</div>` : ''}
+      ${s.qr ? `<div ${A('pop', tq)} class="qrcard">${img(s.qr)}${s.qrLabel ? `<div class="ql">${s.qrLabel}</div>` : ''}</div>` : ''}
+      ${s.contact ? `<div ${A('up', tc)} class="contact">${s.contact}</div>` : ''}
+    </div>`;
+  },
+};
+
+/* ---------- 先空跑一遍：数出每页揭示单元，算页长 ---------- */
+const UNITS = C.scenes.map((s, i) => {
+  if (!R[s.type]) throw new Error(`第 ${i + 1} 页类型未知: ${s.type}`);
+  CX = { cues: null, k: 0, groups: 1 };
+  R[s.type](s, { dur: 10, start: 0 });
+  return { units: CX.k, groups: CX.groups };
+});
+// 纯音乐版自动页长：按揭示单元和分页数估算阅读时间
+const autoDur = u => Math.min(12, Math.max(4, 2.4 + 0.7 * u.units + 1.2 * (u.groups - 1)));
+
+const LEAD = 0.35;
+let acc = 0;
+const TIMES = C.scenes.map((s, i) => {
+  const v = VOICE && VOICE.scenes[i];
+  const tail = v && v.marks ? 0.5 : 0.9;  // 口播同步时页尾留白更短，换页紧跟说话节奏
+  const base = MUSIC_ONLY ? Math.max(s.dur || 0, autoDur(UNITS[i])) : (s.dur || 4);
+  const dur = Math.max(base, v ? LEAD + v.duration + tail : 0);
+  const r = { start: acc, dur };
+  acc += dur;
+  return r;
+});
+window.TOTAL = +acc.toFixed(3);
+window.SCENE_TIMES = TIMES;
+window.VOICE_CLIPS = VOICE ? VOICE.scenes.map((v, i) => v && { file: 'voice/' + v.file, at: TIMES[i].start + LEAD }).filter(Boolean) : [];
+
+/* ---------- 正式构建 ---------- */
+const CUE_WARN = [];
+const SCENES = C.scenes.map((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'scene ' + s.type;
+  const units = UNITS[i].units, v = VOICE && VOICE.scenes[i];
+  let cues = null;
+  if (v && v.marks && units) {
+    if (v.cues && v.cues.length) {
+      cues = v.cues.map(t => Math.max(0.3, LEAD + t - 0.15));
+      if (v.cues.length !== units) CUE_WARN.push(`第 ${i + 1} 页旁白有 ${v.cues.length} 个 |，但页面有 ${units} 个揭示单元（顺序见 content-schema.md）`);
+    } else {  // 没写 |：揭示单元按配音时长均匀铺开
+      cues = Array.from({ length: units }, (_, k) => LEAD + 0.4 + v.duration * 0.8 * k / units);
+    }
+  }
+  CX = { cues, k: 0, groups: 1 };
+  el.innerHTML = emo(R[s.type](s, TIMES[i]));
+  $('#scenes').appendChild(el);
+  return { el, ...TIMES[i], items: [...el.querySelectorAll('[data-t]')], counts: [...el.querySelectorAll('[data-count]')],
+    ring: el.querySelector('[data-ring]'), zoom: el.querySelector('[data-zoom]') };
+});
+window.checkCues = () => CUE_WARN;
+
+/* ---------- 字幕：按标点断句；有逐词时间(marks)就按真实时间，否则按字数比例 ---------- */
+const CUES = [];
+if (VOICE && C.audio.subtitles !== false) C.scenes.forEach((s, i) => {
+  const v = VOICE.scenes[i];
+  if (!v || !s.voice) return;
+  const text = v.text || s.voice.replace(/<[^>]+>/g, '').replace(/\|/g, '');
+  const parts = text.split(/(?<=[。！？!?；;，,、：:])/).filter(x => x.trim());
+  const lines = [];  // [文字, 起始字符位置]
+  let pos = 0;
+  for (const p of parts) {
+    const last = lines[lines.length - 1];
+    if (last && (last[0] + p).trim().length <= (LAND ? 22 : 16)) last[0] += p; else lines.push([p, pos]);
+    pos += p.length;
+  }
+  const at = ci => {
+    if (v.marks) { for (const [idx, t] of v.marks) if (idx >= ci) return t; return v.duration; }
+    return v.duration * ci / text.length;
+  };
+  const t0 = TIMES[i].start + LEAD;
+  lines.forEach(([l, ci], j) => {
+    const a = at(ci), b = j + 1 < lines.length ? at(lines[j + 1][1]) : v.duration;
+    CUES.push({ a: t0 + a, b: t0 + Math.max(b, a + 0.3), text: l.trim().replace(/[，,、；;：:。.！!？?]+$/, '') });
+  });
+});
+
+// 预览截图时刻：每组卡片掉落前一刻 + 每页结束前一刻
+window.STILL_TIMES = SCENES.map(s => {
+  const outs = [...new Set(s.items.map(el => el.dataset.o).filter(Boolean))].map(Number).sort((a, b) => a - b);
+  return [...outs.map(o => s.start + o - 0.05), s.start + s.dur - 0.5];
+});
+
+/* ---------- 逐帧驱动（确定性） ---------- */
+const clamp = x => Math.max(0, Math.min(1, x));
+const outCubic = x => 1 - Math.pow(1 - x, 3);
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const outBack = x => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const inCubic = x => x * x * x;
+const IN = 0.55, OUT = 0.45;  // 入场/退场动画时长
+
+function pose(el, lt, dur, t) {
+  const type = el.dataset.t, d = +el.dataset.d;
+  const p = clamp((lt - d) / IN), e = outCubic(p);
+  let x = 0, y = 0, sc = 1, op = e, blur = 0;
+  if (type === 'right') { x = (1 - e) * 700; blur = (1 - e) * 6; }
+  else if (type === 'up') { y = (1 - e) * 120; blur = (1 - e) * 10; }
+  else if (type === 'pop') { sc = 0.5 + 0.5 * outBack(clamp((lt - d) / 0.7)); op = clamp((lt - d) / 0.3); }
+  const outAt = el.dataset.o != null ? +el.dataset.o : dur - OUT;
+  const q = inCubic(clamp((lt - outAt) / OUT));
+  if (q > 0) { y += q * 520; op *= 1 - q; blur += q * 6; }
+  if (el.dataset.float != null && p >= 1) y += Math.sin(t * 2 + +el.dataset.float * 1.7) * 10;
+  el.style.opacity = op.toFixed(3);
+  el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+  el.style.filter = blur > .1 ? `blur(${blur.toFixed(1)}px)` : 'none';
+}
+
+// 截图局部放大：先亮出高亮框，再推近到该区域
+function zoomPose(z, lt) {
+  const [x, y, w, h] = z.dataset.zoom.split(',').map(Number), zt = +z.dataset.zt;
+  const f = clamp((lt - zt) / 0.35), k = inOut(clamp((lt - zt - 0.4) / 0.9));
+  const s = Math.min(3, Math.max(1.3, 0.9 / Math.sqrt(w * h))), cx = x + w / 2, cy = y + h / 2;  // 宽扁区域允许两侧略裁切
+  const hb = z.querySelector('.hlbox');
+  hb.style.opacity = (f * (1 - k * 0.6)).toFixed(3);
+  z.style.transform = `scale(${(1 + (s - 1) * k).toFixed(4)}) translate(${((0.5 - cx) * 100 * k).toFixed(3)}%, ${((0.5 - cy) * 100 * k).toFixed(3)}%)`;
+}
+
+window.seek = function (t) {
+  for (const s of SCENES) {
+    const lt = t - s.start, on = lt >= 0 && lt < s.dur;
+    s.el.style.display = on ? 'block' : 'none';
+    if (!on) continue;
+    s.items.forEach(el => pose(el, lt, s.dur, t));
+    s.counts.forEach(el => {
+      const k = outCubic(clamp((lt - +el.dataset.cd) / 1.2));
+      const dec = +el.dataset.dec;
+      el.textContent = (+el.dataset.count * k).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    });
+    if (s.ring) [...s.ring.querySelectorAll('.cube')].forEach((c, i, all) => {
+      const ang = (i / all.length) * Math.PI * 2 + t * 0.5;
+      c.style.left = (113 + Math.cos(ang) * 110) + 'px';
+      c.style.top = (113 + Math.sin(ang) * 110) + 'px';
+    });
+    if (s.zoom) zoomPose(s.zoom, lt);
+  }
+  const cue = CUES.find(c => t >= c.a && t < c.b);
+  const sub = $('#sub');
+  sub.style.display = cue ? 'block' : 'none';
+  if (cue) sub.textContent = cue.text;
+};
+
+// 检查内容是否超出安全区（render.mjs --stills 调用）
+window.checkOverflow = function () {
+  const warn = [];
+  SCENES.forEach((s, i) => {
+    let bottom = 0, right = 0;
+    for (let lt = 0.5; lt < s.dur - OUT; lt += 0.5) {  // 逐时刻采样，覆盖分页
+      seek(s.start + lt);
+      s.el.querySelectorAll('.wrap *').forEach(el => {
+        const a = el.closest('[data-t]');
+        if (!a || +a.style.opacity < 0.99 || el.closest('.zin, .deco')) return;  // 只量已停稳的元素，装饰图允许出血
+        const r = el.getBoundingClientRect();
+        bottom = Math.max(bottom, r.bottom);
+        right = Math.max(right, r.right);
+      });
+    }
+    const hw = s.el.querySelector('.herow'), pr = s.el.querySelector('.props');
+    if (hw && pr && pr.children.length) {
+      seek(s.start + s.dur - OUT - 0.1);
+      const hit = (a, b) => a.left < b.right - 20 && b.left < a.right - 20 && a.top < b.bottom - 20 && b.top < a.bottom - 20;
+      const rs = el => [...el.children].map(c => { const r = document.createRange(); r.selectNodeContents(c); return r.getBoundingClientRect(); });  // 量文字实际占的范围，不是整块宽度
+      if (rs(hw).some(a => rs(pr).some(b => hit(a, b)))) warn.push(`第 ${i + 1} 页大标题/副标题太长，压到了下方插画，请缩短或去掉副标题`);
+    }
+    if (bottom > SAFE) warn.push(`第 ${i + 1} 页内容底部到 ${Math.round(bottom)}px，超过 ${SAFE} 安全线（下方留给字幕和平台按钮），请删减文字或拆页`);
+    if (right > W - 40) warn.push(`第 ${i + 1} 页内容右侧到 ${Math.round(right)}px，超出画面，请缩短文字`);
+  });
+  return warn;
+};
+
+if (!location.search.includes('render')) {
+  const t0 = performance.now();
+  (function loop() { seek(((performance.now() - t0) / 1000) % TOTAL); requestAnimationFrame(loop); })();
+} else seek(0);
+</script>
+</body>
+</html>

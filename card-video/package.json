@@ -1,0 +1,6 @@
+{
+  "name": "card-video-skill",
+  "private": true,
+  "description": "卡片信息视频渲染依赖",
+  "dependencies": { "playwright": "^1.50.0" }
+}

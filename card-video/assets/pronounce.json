@@ -1,0 +1,18 @@
+{
+  "_说明": "配音读法表：屏幕上显示左边，配音念右边。项目 content.js 的 audio.pronounce 和 ~/.config/card-video/pronounce.json 会覆盖这里的同名条目。",
+  "≠": "不等于",
+  "≈": "约等于",
+  "→": "到",
+  "SaaS": "萨斯",
+  "PaaS": "帕斯",
+  "ERP": "E R P",
+  "CRM": "C R M",
+  "MRP": "M R P",
+  "KPI": "K P I",
+  "ROI": "R O I",
+  "B2B": "B to B",
+  "B2C": "B to C",
+  "App": "A P P",
+  "vs": "对比",
+  "VS": "对比"
+}
