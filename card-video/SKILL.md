@@ -95,6 +95,7 @@ bash SKILL_DIR/scripts/new_project.sh <项目目录>     # 例如 ./videos/2026-
 ```
 然后改 `<项目目录>/content.js`：页面类型和字段见 `reference/content-schema.md`（先读它）。`content.example.js` 是一个完整示例。
 页面类型共 13 种：hero、list、grid、table、steps、cards、checklist、stats、timeline（时间线）、quote（金句/证言）、compare（左右对比）、image（截图，可局部放大）、outro（二维码）。按内容挑最合适的，连续几页不要用同一种。
+文字特效（打字机、解密、流光、焦点跳词）已内置为 `<fx-*>` 标签，用法见 content-schema.md「文字特效」，适度点缀即可。还要别的特效时读 `reference/motion-recipes.md`，从 motion-anything 配方库移植（必须改写成 `seek(t)` 驱动）。
 emoji 会自动换成 Fluent 3D 图标（任何系统外观一致）。按模式设置：
 
 | | 纯音乐版 | 口播版 |
