@@ -428,7 +428,7 @@ const TIMES = C.scenes.map((s, i) => {
   const v = VOICE && VOICE.scenes[i];
   const tail = v && v.marks ? 0.5 : 0.9;  // 口播同步时页尾留白更短，换页紧跟说话节奏
   const base = MUSIC_ONLY ? Math.max(s.dur || 0, autoDur(UNITS[i])) : (s.dur || 4);
-  const dur = Math.max(base, v ? LEAD + v.duration + tail : 0);
+  const dur = Math.max(base, v ? LEAD + v.duration + tail + (s.hold || 0) : 0);  // hold：讲完后多停留
   const r = { start: acc, dur };
   acc += dur;
   return r;

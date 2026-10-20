@@ -362,7 +362,8 @@ def main():
             continue
         fn = f's{i + 1:02d}.mp3'
         spoken, smap = apply_pronounce(text, pron)
-        words = SYNTH[a.provider](spoken, voice, a.rate, os.path.join(vdir, fn)) or []
+        rate = s.get('rate', a.rate)  # 页面可单独设语速（content.js 每页 rate）
+        words = SYNTH[a.provider](spoken, voice, rate, os.path.join(vdir, fn)) or []
         d = duration(os.path.join(vdir, fn))
         marks, exact = align(spoken, words, d)
         marks = [[smap[i] if i < len(smap) else len(text), t] for i, t in marks]  # 换回屏幕文字位置
